@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Demple</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        html, body {
+            height: 100%;
+            margin: 0;
+            background-color: #1c202a;
+            overscroll-behavior: none; /* Disable default scroll effects */
+            touch-action: pan-x pan-y; /* Restrict touch actions */
+        }
+        #messageInput {
+            background-color: #242935;
+            border: 1px solid transparent;
+            outline: none;
+            padding: 8px 16px;
+            border-radius: 24px;
+            transition: border-color 0.3s ease;
+            color: #ffffff;
+        }
+
+        #messageInput:focus {
+            border-color: #7269e3;
+        }
+
+        .message {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .message.ai {
+            justify-content: flex-start; /* Align AI messages to the left */
+        }
+
+        .message.user {
+            justify-content: flex-end; /* Align user messages to the right */
+        }
+
+        .ai-image {
+            width: 38px; /* Image width */
+            height: 38px; /* Image height */
+            border-radius: 10%; /* Round image */
+            margin-right: 12px; /* Space between image and message */
+        }
+    </style>
+</head>
+<body class="h-screen flex flex-col">
+    <!-- Header Section -->
+    <div style="background-color: #1c202a; user-select: none;" class="fixed top-0 left-0 w-full p-2 h-16 flex items-center">
+        <button id="backButton" class="text-gray-400 ml-2 rounded-2xl">
+            <svg width="30px" height="30px" viewBox="0 0 2050 2050" data-name="Layer 3" id="Layer_3" xmlns="http://www.w3.org/2000/svg" fill="#9ca3af"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"><defs><style>.cls-1{fill:#9ca3af;}</style></defs><title></title><path class="cls-1" d="M1582.2,1488.7a44.9,44.9,0,0,1-36.4-18.5l-75.7-103.9A431.7,431.7,0,0,0,1121.4,1189h-60.1v64c0,59.8-33.5,112.9-87.5,138.6a152.1,152.1,0,0,1-162.7-19.4l-331.5-269a153.5,153.5,0,0,1,0-238.4l331.5-269a152.1,152.1,0,0,1,162.7-19.4c54,25.7,87.5,78.8,87.5,138.6v98.3l161,19.6a460.9,460.9,0,0,1,404.9,457.4v153.4a45,45,0,0,1-45,45Z"></path></g></svg>
+        </button>
+        <img src="demple.png" alt="" class="h-6 ml-4">
+        <h1 class="text-md font-medium ml-4 text-gray-200">Demple</h1>
+    </div>
+
+    <!-- Main Content -->
+    <div id="contentArea" class="flex-grow mt-16">
+        <!-- Messages List -->
+        <div id="messagesContainer" style="background-color: #1c202a;
+        opacity: 1;
+        background-image: radial-gradient(#2c1f52 0.8px, #1c202a 0.8px);
+        background-size: 16px 16px;" class="h-full overflow-y-auto mb-16">
+            <div id="messagesList" class="p-4"></div>
+        </div>
+
+        <!-- Input Section -->
+        <div id="messageInputContainer" style="background-color: #1c202a;" class="fixed bottom-0 left-0 z-50 w-full h-16 p-2 flex items-center">
+            <input
+                id="messageInput" autocomplete="off"
+                placeholder="Type your message ..."
+                class="flex-grow pl-4 pr-4 pt-2 pb-2 rounded-3xl text-gray-200"
+            />
+            <button id="sendMessageButton" style="background-color: #7269e3; user-select: none;" class="ml-2 w-10 h-10 text-gray-200 rounded-full flex items-center justify-center">
+                <span>🎤</span>
+            </button>
+        </div>
+    </div>
+
+    <script type="module" src="chat.js"></script> <!-- Link to external JavaScript -->
+</body>
+</html>

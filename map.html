@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Show My Location</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f9;
+            overflow: hidden;
+        }
+
+        .container {
+            position: relative;
+            width: 100%;
+            height: 140vh;
+            margin-top: -26%;
+
+        }
+
+        #map {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        #backButton {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            padding: 10px 20px;
+            font-size: 16px;
+            background-color: #7269e3;
+            color: #fff;
+            border: none;
+            cursor: pointer;
+            z-index: 1000;
+            display: none; /* Initially hidden */
+        }
+
+        #backButton:hover {
+            background-color: #857ee6;
+        }
+    </style>
+</head>
+<body>
+    <button id="backButton" class="rounded-xl">Back</button>
+    <div class="container">
+        <div id="map"></div>
+    </div>
+
+    <script>
+        const backButton = document.getElementById("backButton");
+        const mapDiv = document.getElementById("map");
+
+        // Function to get the current location and display the map
+        function showLocation() {
+            if (!navigator.geolocation) {
+                output.textContent = "Geolocation is not supported by your browser.";
+                return;
+            }
+
+            const urlParams = new URLSearchParams(window.location.search);
+            const latitude = urlParams.get('lat');
+            const longitude = urlParams.get('lon');
+            const text = urlParams.get('text');
+
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    const latitude = position.coords.latitude;
+                    const longitude = position.coords.longitude;
+
+                    const mapUrl = text;
+                    mapDiv.innerHTML = `<iframe src="${mapUrl}" width="100%" height="100%" frameborder="0" allowfullscreen></iframe>`;
+
+                    backButton.style.display = "block";
+                },
+                (error) => {
+                    output.textContent = `Unable to retrieve your location. Error: ${error.message}`;
+                }
+            );
+        }
+
+        // Show location when the page loads
+        window.onload = showLocation;
+
+        backButton.addEventListener("click", function () {
+            window.history.back();
+        });
+    </script>
+</body>
+</html>

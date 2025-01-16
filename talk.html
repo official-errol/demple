@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Talk</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      padding: 20px;
+      background-color: #1c202a;
+      user-select: none;
+      overscroll-behavior: none;
+      touch-action: pan-x pan-y;
+    }
+    #note-textarea {
+      outline: none;
+      background-color: #1c202a;
+    }
+    button {
+      padding: 10px 20px;
+      font-size: 16px;
+      margin: 10px;
+      cursor: pointer;
+    }
+    .status-circle {
+      width: 12px;
+      height: 12px;
+      margin-bottom: 4px;
+      border-radius: 50%;
+      display: inline-block;
+      margin-left: 10px;
+    }
+    #audio-visualizer {
+      background-color: #242935;
+      margin: 20px auto;
+      display: block;
+      border-radius: 8px;
+    }
+  </style>
+</head>
+<body>
+  <div style="background-color: #1c202a;" class="fixed top-0 left-0 w-full p-2 h-16 flex items-center">
+    <button id="backButton" style="background-color: #242935;" class="text-gray-400 ml-2 p-3 rounded-2xl">
+      <svg width="20px" height="20px" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg" fill="#e5e7eb"><path fill="#e5e7eb" d="M224 480h640a32 32 0 1 1 0 64H224a32 32 0 0 1 0-64z"/><path fill="#e5e7eb" d="m237.248 512 265.408 265.344a32 32 0 0 1-45.312 45.312l-288-288a32 32 0 0 1 0-45.312l288-288a32 32 0 1 1 45.312 45.312L237.248 512z"></path></svg>
+    </button>
+  </div>
+  <h1 style="color: #7269e3; font-size: 30px;" class="text-gray-200 font-bold uppercase mt-16"><span>Demple</span> <span id="status" class="status-circle bg-red-600"></span></h1>
+  <p class="text-gray-200 mt-4 text-xl">Hello! How can I assist you today?</p>
+  <input id="note-textarea" class="text-3xl text-center w-auto mb-12 mt-12 h-auto text-gray-200" readonly placeholder="..."></input>
+  <br>
+  <p id="status-text" class="mt-4 text-sm text-gray-400">Press and hold the button to start recording ...</p>
+  <button id="record-btn" class="text-3xl mt-12">🎙️</button>
+  <canvas id="audio-visualizer" width="300" height="100"></canvas>
+
+  <script>
+    let SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    let recognition = new SpeechRecognition();
+    recognition.continuous = false;
+    recognition.interimResults = false;
+
+    const recordBtn = document.getElementById("record-btn");
+    const noteTextarea = document.getElementById("note-textarea");
+    const status = document.getElementById("status");
+    const statusText = document.getElementById("status-text");
+    const canvas = document.getElementById("audio-visualizer");
+    const canvasCtx = canvas.getContext("2d");
+
+    let audioCtx;
+    let analyser;
+    let dataArray;
+
+    document.getElementById('backButton').addEventListener('click', () => {
+      window.history.back();
+    });
+
+    const esp32URL = "http://esp32.local/receive";
+
+    async function checkESP32Status() {
+      try {
+        await fetch(esp32URL, { method: "GET", mode: 'no-cors' });
+        status.className = "status-circle bg-green-600";
+        statusText.textContent = "Demple is online";
+      } catch (error) {
+        status.className = "status-circle bg-red-600";
+        statusText.textContent = "Demple is offline";
+        console.error("Error checking Demple status:", error);
+      }
+    }
+
+    async function startVisualization() {
+      try {
+        if (audioCtx) return;
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        analyser = audioCtx.createAnalyser();
+        const source = audioCtx.createMediaStreamSource(stream);
+        source.connect(analyser);
+        analyser.fftSize = 256;
+        const bufferLength = analyser.frequencyBinCount;
+        dataArray = new Uint8Array(bufferLength);
+        visualizeAudio();
+      } catch (error) {
+        console.error("Error accessing microphone:", error);
+        statusText.textContent = "Unable to access microphone. Check permissions.";
+      }
+    }
+
+    function stopVisualization() {
+      if (!audioCtx) return;
+      const tracks = audioCtx.stream?.getTracks();
+      tracks?.forEach(track => track.stop());
+      audioCtx.close();
+      audioCtx = null;
+      canvasCtx.clearRect(0, 0, canvas.width, canvas.height);
+    }
+
+    function visualizeAudio() {
+      if (!audioCtx) return;
+      requestAnimationFrame(visualizeAudio);
+      analyser.getByteFrequencyData(dataArray);
+      canvasCtx.fillStyle = "#242935";
+      canvasCtx.fillRect(0, 0, canvas.width, canvas.height);
+      const barWidth = (canvas.width / dataArray.length) * 2.5;
+      let x = 0;
+      for (let i = 0; i < dataArray.length; i++) {
+        const barHeight = dataArray[i] / 2;
+        canvasCtx.fillStyle = `rgb(${barHeight + 100}, 50, 150)`;
+        canvasCtx.fillRect(x, canvas.height - barHeight, barWidth, barHeight);
+        x += barWidth + 1;
+      }
+    }
+
+    recordBtn.addEventListener("mousedown", () => {
+      startVisualization();
+      recognition.start();
+      statusText.textContent = "Listening ...";
+    });
+
+    recordBtn.addEventListener("mouseup", () => {
+      stopVisualization();
+      recognition.stop();
+      statusText.textContent = "Processing ...";
+    });
+
+    recordBtn.addEventListener("touchstart", () => {
+      startVisualization();
+      recognition.start();
+      statusText.textContent = "Listening ...";
+    });
+
+    recordBtn.addEventListener("touchend", () => {
+      stopVisualization();
+      recognition.stop();
+      statusText.textContent = "Processing ...";
+    });
+
+    recognition.onresult = (event) => {
+      const transcript = event.results[0][0].transcript.trim();
+      noteTextarea.value = transcript;
+      sendToESP32(transcript);
+    };
+
+    recognition.onerror = (event) => {
+      console.error("Speech recognition error:", event.error);
+      statusText.textContent = "Error occurred during recognition. Try again.";
+    };
+
+    async function sendToESP32(text) {
+      try {
+        await fetch(esp32URL, {
+          method: "POST",
+          mode: 'no-cors',
+          headers: { "Content-Type": "text/plain" },
+          body: text,
+        });
+        statusText.textContent = "Transcription sent successfully!";
+        noteTextarea.value = "";
+      } catch (error) {
+        console.error("Error sending to Demple:", error);
+        statusText.textContent = "Failed to send transcription. Check Demple connection.";
+      }
+    }
+
+    window.onload = async () => {
+      requestMicrophonePermission();
+      checkESP32Status();
+    };
+
+    async function requestMicrophonePermission() {
+      try {
+        await navigator.mediaDevices.getUserMedia({ audio: true });
+        console.log("Microphone access granted.");
+      } catch (error) {
+        console.error("Microphone access denied:", error);
+        alert("Microphone access is required for this app to function. Please enable it in your device settings.");
+      }
+    }
+  </script>
+</body>
+</html>
